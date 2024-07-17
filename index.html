@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benches in NYC</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.js"></script>
+</head>
+
+<style>
+    body {
+        /*      font-size:2em; It Doubles All the Fonts*/
+        font-size: 1em;
+        line-height: 1.4;
+        font-family: "Avenir Next", "Avenir", sans-serif;
+        background-color: #DAD5CD;
+    }
+
+    .container {
+        max-width: 800px;
+        margin: 40px auto 0 auto;
+        padding: 20px;
+    }
+
+    h1 {
+        color: #261b0d;
+        font-size: 50px;
+        margin-bottom: 20px;
+    }
+
+    h2 {
+        color: #261b0d;
+        font-size: 30px;
+        margin-bottom: 20px;
+    }
+
+    .byline {
+        color: #261b0d;
+        font-size: 20px;
+        font-style: italic;
+        margin-bottom: 20px;
+    }
+
+    p {
+        color: #261b0d;
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    #map {
+        height: 400px;
+        width: 100%;
+        background-color: aliceblue;
+        margin-bottom: 18px;
+    }
+
+    .mapboxgl-popup-content {
+        max-width: 200px;
+        font-size: 20px;
+    }
+</style>
+
+<body>
+
+    <div class="container">
+        <h1>Find a Place to Sit</h1>
+        <h2>Here are all the benches in the City of New York</h2>
+        <p class="byline"></p>
+        <div id="map"></div>
+        <p>
+            Welcome to the ultimate guide for finding a place to sit in the City of New York! The interactive map
+            showcases all the benches scattered throughout this vibrant city, offering you a comprehensive resource to
+            locate a cozy spot to relax, people-watch, or simply take in the bustling urban scenery.
+        </p>
+        <p>
+            Whether you're a local looking for a quiet place to read in Central Park, a visitor needing a break while
+            exploring the iconic landmarks, or just someone in need of a peaceful moment in the middle of your busy day,
+            our map has got you covered. Every green and open space, park, and corner of the city is meticulously mapped
+            to help you find the nearest bench at a glance.
+        </p>
+        <p>
+            Source of Data: <a href="https://data.cityofnewyork.us/Transportation/City-Bench-Locations-Historical-/kuxa-tauh/data#:~:text=CityBench%20is%20an%20initiative%20to,high%20concentrations%20of%20senior%20citizens.">NYC Open Data</a>
+        </p>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoibGl0YW90aG9tYXNsZWUiLCJhIjoiY2xwenc4eTEzMHc1cjJtbnAwY2Q5cXNoNiJ9.uFOrpSKa1zzLG3MDoQ8BOg';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/litaothomaslee/clyd8jox7011m01qr34px8yy6',
+            center: [-73.905, 40.7317],
+            zoom: 10
+        });
+
+        map.on('style.load', () => {
+            map.addSource('bench', {
+                type: 'geojson',
+                data: 'data/bench.geojson'
+            });
+            map.addLayer({
+                id: 'bench-layer',
+                type: 'symbol',
+                source: 'bench',
+                layout: {
+                    'icon-image': 'bench-svgrepo-com',
+                    'icon-size': 0.03
+                }
+            });
+            const popup = new mapboxgl.Popup({
+                closeButton: false,
+                closeOnClick: false
+            });
+
+            map.on('mouseenter', 'bench-layer', (e) => {
+                map.getCanvas().style.cursor = 'pointer';
+                const feature = e.features[0];
+                popup.setLngLat(feature.geometry.coordinates)
+                    .setHTML(`<div>${feature.properties.address}, ${feature.properties.borough}</div>`)
+                    .addTo(map);
+            });
+
+            map.on('mouseleave', 'bench-layer', () => {
+                map.getCanvas().style.cursor = '';
+                popup.remove();
+            });
+        });
+
+    </script>
+
+</body>
+
+</html>
