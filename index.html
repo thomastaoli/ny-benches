@@ -12,7 +12,6 @@
 
 <style>
     body {
-        /*      font-size:2em; It Doubles All the Fonts*/
         font-size: 1em;
         line-height: 1.4;
         font-family: "Avenir Next", "Avenir", sans-serif;
@@ -87,47 +86,63 @@
     </div>
 
     <script>
-        mapboxgl.accessToken = 'pk.eyJ1IjoibGl0YW90aG9tYXNsZWUiLCJhIjoiY2xwenc4eTEzMHc1cjJtbnAwY2Q5cXNoNiJ9.uFOrpSKa1zzLG3MDoQ8BOg';
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/litaothomaslee/clyd8jox7011m01qr34px8yy6',
-            center: [-73.905, 40.7317],
-            zoom: 10
+        async function getMapboxToken() {
+            const response = await fetch('/api/key');
+            const data = await response.json();
+            return data.apiKey;
+        }
+
+        getMapboxToken().then((apiKey) => {
+            mapboxgl.accessToken = apiKey;
+            const map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/litaothomaslee/clyd8jox7011m01qr34px8yy6',
+                center: [-73.905, 40.7317],
+                zoom: 10
+            });
+
+            map.on('style.load', () => {
+                fetch('data/bench.geojson')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('GeoJSON data:', data); // Log the data to inspect it
+                        map.addSource('bench', {
+                            type: 'geojson',
+                            data: data
+                        });
+                        map.addLayer({
+                            id: 'bench-layer',
+                            type: 'symbol',
+                            source: 'bench',
+                            layout: {
+                                'icon-image': 'bench-svgrepo-com',
+                                'icon-size': 0.03
+                            }
+                        });
+                        const popup = new mapboxgl.Popup({
+                            closeButton: false,
+                            closeOnClick: false
+                        });
+
+                        map.on('mouseenter', 'bench-layer', (e) => {
+                            map.getCanvas().style.cursor = 'pointer';
+                            const feature = e.features[0];
+                            console.log('Feature:', feature); // Log the feature to inspect it
+                            popup.setLngLat(feature.geometry.coordinates)
+                                .setHTML(`<div>${feature.properties.address}, ${feature.properties.borough}</div>`)
+                                .addTo(map);
+                        });
+
+                        map.on('mouseleave', 'bench-layer', () => {
+                            map.getCanvas().style.cursor = '';
+                            popup.remove();
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading GeoJSON:', error);
+                    });
+            });
         });
-
-        map.on('style.load', () => {
-            map.addSource('bench', {
-                type: 'geojson',
-                data: 'data/bench.geojson'
-            });
-            map.addLayer({
-                id: 'bench-layer',
-                type: 'symbol',
-                source: 'bench',
-                layout: {
-                    'icon-image': 'bench-svgrepo-com',
-                    'icon-size': 0.03
-                }
-            });
-            const popup = new mapboxgl.Popup({
-                closeButton: false,
-                closeOnClick: false
-            });
-
-            map.on('mouseenter', 'bench-layer', (e) => {
-                map.getCanvas().style.cursor = 'pointer';
-                const feature = e.features[0];
-                popup.setLngLat(feature.geometry.coordinates)
-                    .setHTML(`<div>${feature.properties.address}, ${feature.properties.borough}</div>`)
-                    .addTo(map);
-            });
-
-            map.on('mouseleave', 'bench-layer', () => {
-                map.getCanvas().style.cursor = '';
-                popup.remove();
-            });
-        });
-
     </script>
 
 </body>
